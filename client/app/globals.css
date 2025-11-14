@@ -110,6 +110,14 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.552 0.016 285.938);
+  
+  /* Tokens de cor para mesh gradients Impera */
+  --mesh-orange: #e56d21;
+  --mesh-red: #ba3316;
+  --mesh-teal: #60a38b;
+  --mesh-purple: #473987;
+  --mesh-amber: #d69241;
+  --mesh-green: #509c87;
 }
 
 @layer base {
@@ -118,6 +126,25 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Focus states visíveis para acessibilidade */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  
+  /* Remove outline padrão do navegador */
+  *:focus {
+    outline: none;
+  }
+  
+  /* Mantém focus-visible para navegação por teclado */
+  *:focus:not(:focus-visible) {
+    outline: none;
   }
 }
 
@@ -129,6 +156,203 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  /* Mesh gradients Impera - Classes utilitárias sutis */
+  .mesh-accent-light {
+    background: radial-gradient(
+      ellipse 80% 50% at 50% 0%,
+      rgba(229, 109, 33, 0.08) 0%,
+      rgba(186, 51, 22, 0.06) 25%,
+      rgba(96, 163, 139, 0.05) 50%,
+      rgba(71, 57, 135, 0.04) 75%,
+      transparent 100%
+    );
+  }
+  
+  .mesh-accent-border {
+    border-image: linear-gradient(
+      90deg,
+      rgba(229, 109, 33, 0.12) 0%,
+      rgba(186, 51, 22, 0.10) 20%,
+      rgba(96, 163, 139, 0.08) 40%,
+      rgba(71, 57, 135, 0.10) 60%,
+      rgba(214, 146, 65, 0.08) 80%,
+      rgba(80, 156, 135, 0.06) 100%
+    ) 1;
+  }
+  
+  .mesh-accent-bg {
+    background: 
+      radial-gradient(ellipse at top left, rgba(229, 109, 33, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at top right, rgba(71, 57, 135, 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom left, rgba(96, 163, 139, 0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(214, 146, 65, 0.05) 0%, transparent 50%);
+  }
+  
+  .mesh-accent-glow {
+    box-shadow: 
+      0 0 20px rgba(229, 109, 33, 0.08),
+      0 0 40px rgba(71, 57, 135, 0.06),
+      0 0 60px rgba(96, 163, 139, 0.04);
+  }
+  
+  .mesh-accent-hover {
+    transition: all 0.3s ease;
+  }
+  
+  .mesh-accent-hover:hover {
+    box-shadow: 
+      0 4px 12px rgba(229, 109, 33, 0.1),
+      0 2px 4px rgba(71, 57, 135, 0.08);
+  }
+  
+  .mesh-separator {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(229, 109, 33, 0.15) 20%,
+      rgba(96, 163, 139, 0.12) 50%,
+      rgba(71, 57, 135, 0.15) 80%,
+      transparent 100%
+    ) !important;
+  }
+  
+  .mesh-separator[data-orientation="vertical"] {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(229, 109, 33, 0.15) 20%,
+      rgba(96, 163, 139, 0.12) 50%,
+      rgba(71, 57, 135, 0.15) 80%,
+      transparent 100%
+    ) !important;
+  }
+  
+  .mesh-card-top {
+    position: relative;
+  }
+  
+  .mesh-card-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      rgba(229, 109, 33, 0.2) 0%,
+      rgba(96, 163, 139, 0.15) 50%,
+      rgba(71, 57, 135, 0.2) 100%
+    );
+    border-radius: 0.625rem 0.625rem 0 0;
+    opacity: 0.6;
+  }
+  
+  .mesh-sidebar-active {
+    position: relative;
+  }
+  
+  /* Hover dos botões da sidebar com sombra laranja */
+  .mesh-sidebar-hover:hover {
+    box-shadow: 0 2px 8px rgba(229, 109, 33, 0.2), 0 0 0 1px rgba(229, 109, 33, 0.15) inset;
+  }
+  
+  .mesh-sidebar-hover:active {
+    box-shadow: 0 1px 4px rgba(229, 109, 33, 0.15), 0 0 0 1px rgba(229, 109, 33, 0.1) inset;
+  }
+  
+  .mesh-header-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(ellipse 100% 50% at 50% 0%, rgba(229, 109, 33, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 30% at 20% 0%, rgba(71, 57, 135, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+    opacity: 0.8;
+    z-index: 0;
+  }
+  
+  /* Botões com identidade Impera */
+  .mesh-button-primary {
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(229, 109, 33, 0.15), 0 0 0 1px rgba(229, 109, 33, 0.1) inset;
+  }
+  
+  .mesh-button-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(229, 109, 33, 0.3) 0%, rgba(71, 57, 135, 0.25) 50%, rgba(96, 163, 139, 0.2) 100%);
+    border-radius: inherit;
+    opacity: 0.4;
+    z-index: 0;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+  
+  .mesh-button-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(229, 109, 33, 0.2) 0%, rgba(71, 57, 135, 0.15) 50%, rgba(96, 163, 139, 0.12) 100%);
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+    pointer-events: none;
+  }
+  
+  .mesh-button-primary:hover::after {
+    opacity: 0.6;
+  }
+  
+  .mesh-button-primary:hover {
+    box-shadow: 0 4px 12px rgba(229, 109, 33, 0.25), 0 0 0 1px rgba(229, 109, 33, 0.2) inset;
+  }
+  
+  .mesh-button-primary > * {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .mesh-button-outline {
+    border: 1px solid rgba(229, 109, 33, 0.3) !important;
+    background: rgba(229, 109, 33, 0.05) !important;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .mesh-button-outline::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(229, 109, 33, 0.1) 0%, rgba(96, 163, 139, 0.08) 50%, rgba(71, 57, 135, 0.06) 100%);
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+    pointer-events: none;
+  }
+  
+  .mesh-button-outline:hover {
+    background: rgba(229, 109, 33, 0.1) !important;
+    border-color: rgba(229, 109, 33, 0.4) !important;
+  }
+  
+  .mesh-button-outline:hover::before {
+    opacity: 1;
+  }
+  
+  .mesh-button-outline > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 @keyframes slideUpFadeIn {
@@ -139,5 +363,14 @@
   to {
     opacity: 1;
     transform: translate(-50%, 0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
   }
 }

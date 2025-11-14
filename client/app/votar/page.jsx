@@ -194,7 +194,7 @@ function RankingView({ submitResult }) {
 	return (
 		<div className="space-y-5 pb-8 relative">
 			{/* Notificação de Badge Desbloqueado */}
-			{showBadgeNotification && submitResult?.badgeUnlocked && (
+			{/* {showBadgeNotification && submitResult?.badgeUnlocked && (
 				<div
 					className={cn(
 						"fixed bottom-6 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ease-in-out",
@@ -230,7 +230,7 @@ function RankingView({ submitResult }) {
 						</CardContent>
 					</Card>
 				</div>
-			)}
+			)} */}
 
 			{/* Seção: Meu Perfil */}
 			<div className="gap-2 flex flex-col">
@@ -843,6 +843,7 @@ function VotarContent() {
 											CPF
 										</label>
 										<Input
+											variant="votar"
 											id="cpf"
 											type="tel"
 											inputMode="numeric"
@@ -891,6 +892,7 @@ function VotarContent() {
 											Celular
 										</label>
 										<Input
+											variant="votar"
 											id="phone"
 											type="tel"
 											inputMode="numeric"

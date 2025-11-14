@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils"
 const Button = React.forwardRef(
   ({ className, variant = "default", size = "default", ...props }, ref) => {
     const variants = {
-      default: "bg-primary text-primary-foreground hover:bg-primary/90",
+      default: "bg-primary text-primary-foreground hover:bg-primary/90 mesh-button-primary mesh-accent-hover relative overflow-hidden",
       destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-      outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-      secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-      ghost: "hover:bg-accent hover:text-accent-foreground",
+      outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground mesh-button-outline mesh-accent-hover",
+      secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 mesh-accent-hover",
+      ghost: "hover:bg-accent hover:text-accent-foreground mesh-accent-hover",
       link: "text-primary underline-offset-4 hover:underline",
     }
 
@@ -22,7 +22,7 @@ const Button = React.forwardRef(
     return (
       <button
         className={cn(
-          "inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+          "inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-semibold ring-offset-background transition-all duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
           variants[variant],
           sizes[size],
           className
