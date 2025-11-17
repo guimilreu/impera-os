@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { ArrowRight, ArrowLeft, Camera, CheckCircle2, Loader2, MapPin, Trophy, Award, ChevronRight, User, Star, X } from "lucide-react";
@@ -1630,5 +1630,13 @@ function VotarContent() {
 }
 
 export default function VotarPage() {
-	return <VotarContent />;
+	return (
+		<Suspense fallback={
+			<div className="flex min-h-[100svh] items-center justify-center">
+				<Loader2 className="h-8 w-8 animate-spin text-white" />
+			</div>
+		}>
+			<VotarContent />
+		</Suspense>
+	);
 }
