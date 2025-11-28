@@ -27,8 +27,10 @@ export function Header({ onMenuClick }) {
 
 	const roleLabels = {
 		admin: "Administrador",
-		franqueado: "Franqueado",
+		socio_local: "Sócio Local",
 		estabelecimento: "Estabelecimento",
+		fotografo: "Fotógrafo",
+		cliente: "Cliente",
 	};
 
 	return (
@@ -41,9 +43,11 @@ export function Header({ onMenuClick }) {
 				<div className="flex flex-1 items-center justify-between gap-6">
 					{/* Logo e Tenant Selector */}
 					<div className="flex items-center gap-6 min-w-0 flex-1">
-						<img
+						<Image
 							src="/logo-horizontal.png"
 							alt="Prêmio Impera"
+							width={200}
+							height={24}
 							className="h-6 w-auto object-contain flex-shrink-0"
 							priority
 						/>

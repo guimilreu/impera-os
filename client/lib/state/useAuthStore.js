@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { canView } from '../permissions'
 
 /**
  * Store de autenticação e roles
@@ -7,12 +8,12 @@ import { persist } from 'zustand/middleware'
  */
 export const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Estado de autenticação
       isAuthenticated: false,
       user: null,
 
-      // Role atual: 'admin' | 'franqueado' | 'estabelecimento'
+      // Role atual: 'admin' | 'socio_local' | 'estabelecimento' | 'fotografo' | 'cliente'
       role: null,
       
       // ID do estabelecimento (se role = estabelecimento)
@@ -56,33 +57,23 @@ export const useAuthStore = create(
       
       setSigiloAtivo: (value) => set({ sigiloAtivo: value }),
 
-  // Verifica se tem permissão para módulo
-  hasPermission: (module) => {
-    const state = useAuthStore.getState()
-    const { role, premiacaoEncerrada } = state
+      // Verifica se tem permissão para visualizar módulo
+      // Usa o estado atual do store
+      hasPermission: (module) => {
+        const state = get()
+        const role = state.role
+        const premiacaoEncerrada = state.premiacaoEncerrada
+        
+        if (!role) return false
+        
+        // Caso especial: relatorios para estabelecimento depende de premiacaoEncerrada
+        if (module === 'relatorios' && role === 'estabelecimento') {
+          return premiacaoEncerrada && canView(role, module)
+        }
 
-    const permissions = {
-      overview: ['admin', 'franqueado'],
-      cidades: ['admin', 'franqueado'],
-      edicoes: ['admin', 'franqueado'],
-      estabelecimentos: ['admin', 'franqueado'],
-      pratos: ['admin', 'franqueado'],
-      votos: ['admin', 'franqueado'],
-      auditoria: ['admin', 'franqueado'],
-      moderacao: ['admin', 'franqueado'],
-      relatorios: role === 'estabelecimento' ? premiacaoEncerrada : ['admin', 'franqueado'],
-      checklists: ['admin', 'franqueado', 'estabelecimento'],
-      configuracoes: ['admin'],
-    }
-
-    const allowedRoles = permissions[module] || []
-    
-    if (Array.isArray(allowedRoles)) {
-      return allowedRoles.includes(role)
-    }
-    
-    return allowedRoles === true
-  },
+        const result = canView(role, module)
+        return result
+      },
     }),
     {
       name: 'auth-storage', // Nome da chave no localStorage

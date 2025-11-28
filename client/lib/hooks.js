@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 
 export function useMobileGuard() {
   const [isMobile, setIsMobile] = useState(false)
@@ -168,4 +168,104 @@ export function useOTPTimer(initialSeconds = 60) {
 
   return { seconds, isActive, start, reset }
 }
+
+/**
+ * Hook genérico para gerenciar filtros de lista com busca, paginação e filtros customizados
+ * @param {Object} options - Opções de configuração
+ * @param {Array} options.initialData - Dados iniciais
+ * @param {number} options.pageSize - Itens por página (default: 10)
+ * @param {Array<string>} options.searchFields - Campos para busca
+ * @param {Object} options.initialFilters - Filtros iniciais
+ * @returns {Object} - Estado e funções para gerenciar a lista
+ */
+export function useListFilters(options = {}) {
+  const { 
+    initialData = [], 
+    pageSize = 10, 
+    searchFields = ['name'],
+    initialFilters = {}
+  } = options
+  
+  const [search, setSearch] = useState('')
+  const [filters, setFilters] = useState(initialFilters)
+  const [page, setPage] = useState(1)
+  const [data, setData] = useState(initialData)
+  
+  // Atualiza dados quando initialData muda
+  useEffect(() => {
+    setData(initialData)
+  }, [initialData])
+  
+  // Filtra dados
+  const filteredData = useMemo(() => {
+    let result = [...data]
+    
+    // Aplica busca
+    if (search.trim()) {
+      const term = search.toLowerCase().trim()
+      result = result.filter(item =>
+        searchFields.some(field => {
+          const value = item[field]
+          if (value == null) return false
+          return String(value).toLowerCase().includes(term)
+        })
+      )
+    }
+    
+    // Aplica filtros customizados
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== 'all') {
+        result = result.filter(item => {
+          const itemValue = item[key]
+          // Suporta comparação de números e strings
+          return String(itemValue) === String(value)
+        })
+      }
+    })
+    
+    return result
+  }, [data, search, filters, searchFields])
+  
+  // Paginação
+  const totalPages = Math.ceil(filteredData.length / pageSize)
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * pageSize
+    return filteredData.slice(start, start + pageSize)
+  }, [filteredData, page, pageSize])
+  
+  // Reset página quando filtros mudam
+  useEffect(() => {
+    setPage(1)
+  }, [search, filters])
+  
+  const updateFilter = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }))
+  }
+  
+  const resetFilters = () => {
+    setSearch('')
+    setFilters(initialFilters)
+    setPage(1)
+  }
+  
+  return {
+    // Estado
+    search,
+    filters,
+    page,
+    totalPages,
+    totalItems: filteredData.length,
+    // Dados
+    data: paginatedData,
+    allFilteredData: filteredData,
+    // Funções
+    setSearch,
+    setFilters,
+    updateFilter,
+    setPage,
+    resetFilters,
+    setData,
+  }
+}
+
 

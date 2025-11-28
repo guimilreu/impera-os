@@ -221,7 +221,7 @@ export default function EdicoesPage() {
                 <Label htmlFor="name">Nome da Edição</Label>
                 <Input
                   id="name"
-                  placeholder="Ex: Edição 2024"
+                  placeholder="Ex: Edição 2025"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   disabled={creating}
@@ -252,7 +252,7 @@ export default function EdicoesPage() {
                 <Input
                   id="year"
                   type="number"
-                  placeholder="2024"
+                  placeholder="2025"
                   value={formData.year}
                   onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                   disabled={creating}

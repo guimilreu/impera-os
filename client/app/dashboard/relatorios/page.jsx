@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Download, FileText, Building2, Calendar, Tag } from "lucide-react"
+import { Download, FileText, Building2, Calendar, Tag, Lock } from "lucide-react"
 import { Breadcrumb } from "@/components/dashboard/Breadcrumb"
+import { SigiloBanner } from "@/components/dashboard/SigiloIndicator"
 import { useAuthStore } from "@/lib/state/useAuthStore"
 import { useTenantStore } from "@/lib/state/useTenantStore"
 import { delay, DEFAULT_DELAY } from "@/lib/utils/delay"
@@ -46,8 +47,8 @@ export default function RelatoriosPage() {
           { nome: 'Bistrô Gourmet', votos: 320, media: 4.2, posicao: 3 },
         ],
         edicao: [
-          { nome: 'Edição 2024', totalVotos: 5000, estabelecimentos: 50, mediaGeral: 4.4 },
-          { nome: 'Edição 2023', totalVotos: 4500, estabelecimentos: 45, mediaGeral: 4.3 },
+          { nome: 'Edição 2025', totalVotos: 5000, estabelecimentos: 50, mediaGeral: 4.4 },
+          { nome: 'Edição 2024', totalVotos: 4500, estabelecimentos: 45, mediaGeral: 4.3 },
         ],
         categoria: [
           { nome: 'Pratos Principais', votos: 2000, media: 4.5 },
@@ -149,11 +150,19 @@ export default function RelatoriosPage() {
         )}
       </div>
 
+      {/* Banner de Sigilo */}
+      {sigiloAtivo && (
+        <SigiloBanner 
+          title="Relatórios parcialmente bloqueados"
+          description="Os relatórios por estabelecimento e edição estão protegidos pelo sigilo. Apenas relatórios por categoria estão disponíveis."
+        />
+      )}
+
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className={sigiloAtivo ? 'opacity-60' : ''}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 tracking-tight">
-              <Building2 className="h-5 w-5" />
+              {sigiloAtivo ? <Lock className="h-5 w-5 text-yellow-600" /> : <Building2 className="h-5 w-5" />}
               Relatório por Estabelecimento
             </CardTitle>
             <CardDescription>Estatísticas por estabelecimento</CardDescription>
@@ -168,17 +177,18 @@ export default function RelatoriosPage() {
               {loading && reportType === 'estabelecimento' ? 'Gerando...' : 'Gerar Relatório'}
             </Button>
             {sigiloAtivo && (
-              <p className="text-xs text-muted-foreground text-center">
-                Bloqueado enquanto sigilo estiver ativo
+              <p className="text-xs text-yellow-600 text-center flex items-center justify-center gap-1">
+                <Lock className="h-3 w-3" />
+                Bloqueado pelo sigilo
               </p>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={sigiloAtivo ? 'opacity-60' : ''}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 tracking-tight">
-              <Calendar className="h-5 w-5" />
+              {sigiloAtivo ? <Lock className="h-5 w-5 text-yellow-600" /> : <Calendar className="h-5 w-5" />}
               Relatório por Edição
             </CardTitle>
             <CardDescription>Estatísticas por edição</CardDescription>
@@ -193,8 +203,9 @@ export default function RelatoriosPage() {
               {loading && reportType === 'edicao' ? 'Gerando...' : 'Gerar Relatório'}
             </Button>
             {sigiloAtivo && (
-              <p className="text-xs text-muted-foreground text-center">
-                Bloqueado enquanto sigilo estiver ativo
+              <p className="text-xs text-yellow-600 text-center flex items-center justify-center gap-1">
+                <Lock className="h-3 w-3" />
+                Bloqueado pelo sigilo
               </p>
             )}
           </CardContent>

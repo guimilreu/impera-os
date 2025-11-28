@@ -8,13 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Search, Download, Eye, CheckCircle2, XCircle, MapPin, Vote } from "lucide-react"
+import { Search, Download, Eye, CheckCircle2, XCircle, MapPin, Vote, Lock } from "lucide-react"
 import { EmptyState } from "@/components/dashboard/EmptyState"
 import { Breadcrumb } from "@/components/dashboard/Breadcrumb"
 import { Pagination } from "@/components/dashboard/Pagination"
 import { DashboardCard } from "@/components/dashboard/DashboardCard"
 import { DashboardSkeleton } from "@/components/dashboard/Skeletons"
 import { StatusBadge } from "@/components/dashboard/StatusBadge"
+import { SigiloBanner, SigiloValue } from "@/components/dashboard/SigiloIndicator"
 import { useTenantStore } from "@/lib/state/useTenantStore"
 import { useAuthStore } from "@/lib/state/useAuthStore"
 import { delay, DEFAULT_DELAY } from "@/lib/utils/delay"
@@ -165,6 +166,14 @@ export default function VotosPage() {
         </Button>
       </div>
 
+      {/* Banner de Sigilo */}
+      {sigiloAtivo && (
+        <SigiloBanner 
+          title="Notas e exportação bloqueadas"
+          description="As notas dos votos estão protegidas pelo sigilo. A exportação CSV também está desabilitada até a premiação."
+        />
+      )}
+
       {/* Cards de Estatísticas */}
       {stats && (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -296,7 +305,7 @@ export default function VotosPage() {
                       <TableCell className="text-sm">{formatDateTime(voto.horario)}</TableCell>
                       <TableCell>
                         {sigiloAtivo ? (
-                          <span className="text-muted-foreground">***</span>
+                          <SigiloValue />
                         ) : (
                           <span className="font-medium">{voto.total.toFixed(2)}</span>
                         )}

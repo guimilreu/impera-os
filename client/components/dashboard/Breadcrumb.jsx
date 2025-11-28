@@ -22,12 +22,15 @@ export function Breadcrumb() {
         cidades: 'Cidades',
         edicoes: 'Edições',
         estabelecimentos: 'Estabelecimentos',
-        pratos: 'Pratos',
+        pratos: 'Receitas',
         votos: 'Votos',
-        auditoria: 'Auditoria',
+        avaliacao: 'Avaliação',
+        auditoria: 'Moderação',
         moderacao: 'Moderação',
+        clientes: 'Clientes',
         relatorios: 'Relatórios',
         checklists: 'Checklists',
+        treinamentos: 'Treinamentos',
         configuracoes: 'Configurações',
       }
       

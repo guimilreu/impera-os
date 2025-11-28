@@ -27,6 +27,16 @@ import { formatNumber, formatDateTime } from "@/lib/utils/format"
 import { mockHash, randomFloat, randomDate } from "@/lib/utils/faker"
 import { toast } from "sonner"
 
+// URLs de imagens de comida para mock
+const FOOD_IMAGES_AUDIT = [
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&h=600&fit=crop',
+  'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&h=600&fit=crop',
+]
+
 // Gera mais itens mockados
 function generateAuditoriaItems(count = 15) {
   const items = []
@@ -39,7 +49,7 @@ function generateAuditoriaItems(count = 15) {
     items.push({
       id: i,
       votoId: `VOTE_${String(i).padStart(3, '0')}`,
-      foto: '/prato.jpg',
+      foto: FOOD_IMAGES_AUDIT[i % FOOD_IMAGES_AUDIT.length],
       hash: mockHash(32),
       gps,
       distancia: randomFloat(0, 1),
@@ -312,7 +322,7 @@ export default function AuditoriaPage() {
 
       {/* Modal de Detalhes */}
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="!max-w-2xl">
           <DialogHeader>
             <DialogTitle>Detalhes do Voto - {selectedItem?.votoId}</DialogTitle>
             <DialogDescription>

@@ -16,18 +16,18 @@ export const cities = [
 
 export const editions = {
   1: [ // Bauru
-    { id: 1, name: 'Edição 2024', cityId: 1, year: 2024, sigiloAtivo: true },
-    { id: 2, name: 'Edição 2023', cityId: 1, year: 2023, sigiloAtivo: false },
+    { id: 1, name: 'Edição 2025', cityId: 1, year: 2025, sigiloAtivo: true },
+    { id: 2, name: 'Edição 2024', cityId: 1, year: 2024, sigiloAtivo: false },
   ],
   2: [ // Marília
-    { id: 3, name: 'Edição 2024', cityId: 2, year: 2024, sigiloAtivo: false },
-    { id: 4, name: 'Edição 2023', cityId: 2, year: 2023, sigiloAtivo: false },
+    { id: 3, name: 'Edição 2025', cityId: 2, year: 2025, sigiloAtivo: false },
+    { id: 4, name: 'Edição 2024', cityId: 2, year: 2024, sigiloAtivo: false },
   ],
   3: [ // Botucatu
-    { id: 5, name: 'Edição 2024', cityId: 3, year: 2024, sigiloAtivo: true },
+    { id: 5, name: 'Edição 2025', cityId: 3, year: 2025, sigiloAtivo: true },
   ],
   4: [ // São José do Rio Preto
-    { id: 6, name: 'Edição 2024', cityId: 4, year: 2024, sigiloAtivo: false },
+    { id: 6, name: 'Edição 2025', cityId: 4, year: 2025, sigiloAtivo: false },
   ],
 }
 
@@ -43,5 +43,26 @@ export function getAllCities() {
  */
 export function getEditionsByCity(cityId) {
   return editions[cityId] || []
+}
+
+/**
+ * Retorna todas as edições de todas as cidades
+ */
+export function getAllEditions() {
+  return Object.values(editions).flat()
+}
+
+/**
+ * Retorna uma cidade pelo ID
+ */
+export function getCityById(cityId) {
+  return cities.find(c => c.id === cityId) || null
+}
+
+/**
+ * Retorna uma edição pelo ID
+ */
+export function getEditionById(editionId) {
+  return getAllEditions().find(e => e.id === editionId) || null
 }
 

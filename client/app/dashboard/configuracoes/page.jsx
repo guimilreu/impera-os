@@ -10,8 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { useAuthStore } from "@/lib/state/useAuthStore"
 import { delay, DEFAULT_DELAY } from "@/lib/utils/delay"
 import { toast } from "sonner"
-import { Save, Settings, Lock, Trophy, MapPin, Bell } from "lucide-react"
+import { Save, Settings, Lock, Trophy, MapPin, Bell, Calendar, ChevronRight } from "lucide-react"
 import { Breadcrumb } from "@/components/dashboard/Breadcrumb"
+import Link from "next/link"
 
 export default function ConfiguracoesPage() {
   const { sigiloAtivo, premiacaoEncerrada, setSigiloAtivo, setPremiacaoEncerrada } = useAuthStore()
@@ -171,6 +172,40 @@ export default function ConfiguracoesPage() {
               Receba notificações sobre votos suspeitos, denúncias e atualizações.
             </p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Gestão de Cidades e Edições */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 tracking-tight">
+            <Settings className="h-5 w-5" />
+            Gestão de Cidades e Edições
+          </CardTitle>
+          <CardDescription>Gerencie cidades e edições do sistema</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Link href="/dashboard/cidades">
+            <Button variant="outline" className="w-full justify-between group">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span>Cidades</span>
+              </div>
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </Link>
+          <Link href="/dashboard/edicoes">
+            <Button variant="outline" className="w-full justify-between group">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>Edições</span>
+              </div>
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </Link>
+          <p className="text-sm text-muted-foreground">
+            Essas seções são pouco utilizadas e foram movidas para Configurações.
+          </p>
         </CardContent>
       </Card>
     </div>

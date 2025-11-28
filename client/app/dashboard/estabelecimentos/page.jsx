@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Plus, Search, Edit, Eye, Building2, Star, Trophy, MapPin } from "lucide-react"
+import { Plus, Search, Edit, Eye, Building2, Star, Trophy, MapPin, Phone, Mail, Clock, Camera, CreditCard, Ticket, Instagram, CheckCircle2, XCircle, Lock } from "lucide-react"
 import { EmptyState } from "@/components/dashboard/EmptyState"
 import { Breadcrumb } from "@/components/dashboard/Breadcrumb"
 import { Pagination } from "@/components/dashboard/Pagination"
@@ -16,10 +16,12 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { DashboardCard } from "@/components/dashboard/DashboardCard"
 import { DashboardSkeleton } from "@/components/dashboard/Skeletons"
 import { StatusBadge } from "@/components/dashboard/StatusBadge"
+import { SigiloBanner, SigiloValue } from "@/components/dashboard/SigiloIndicator"
 import { useTenantStore } from "@/lib/state/useTenantStore"
 import { useAuthStore } from "@/lib/state/useAuthStore"
+import { usePermissions } from "@/lib/permissions"
 import { delay, DEFAULT_DELAY } from "@/lib/utils/delay"
-import { formatNumber, formatRating } from "@/lib/utils/format"
+import { formatNumber, formatRating, formatDateTime } from "@/lib/utils/format"
 import { estabelecimentos, getEstabelecimentosByTenant } from "@/lib/mock/estabelecimentos"
 import { getAllCities, getEditionsByCity } from "@/lib/mock/tenants"
 import { toast } from "sonner"
@@ -55,8 +57,13 @@ export default function EstabelecimentosPage() {
     endereco: "",
     telefone: ""
   })
-  const { sigiloAtivo } = useAuthStore()
+  const { sigiloAtivo, role, estabelecimentoId } = useAuthStore()
+  const permissions = usePermissions(role)
   const allCities = getAllCities()
+  const [selectedEstabelecimento, setSelectedEstabelecimento] = useState(null)
+  
+  // Verifica se é restaurante (vê apenas seu próprio estabelecimento)
+  const isRestaurante = role === 'estabelecimento'
 
   useEffect(() => {
     loadData()
@@ -70,7 +77,13 @@ export default function EstabelecimentosPage() {
     setLoading(true)
     try {
       await delay(DEFAULT_DELAY)
-      const data = getEstabelecimentosByTenant(city?.id, edition?.id)
+      let data = getEstabelecimentosByTenant(city?.id, edition?.id)
+      
+      // Se for restaurante, filtra apenas o próprio estabelecimento
+      if (isRestaurante && estabelecimentoId) {
+        data = data.filter(e => e.id === estabelecimentoId)
+      }
+      
       setEstabelecimentosList(data)
       
       // Calcula estatísticas
@@ -166,7 +179,7 @@ export default function EstabelecimentosPage() {
   }
 
   function handleView(estabelecimento) {
-    toast.info(`Ver detalhes: ${estabelecimento.name} (mock)`)
+    setSelectedEstabelecimento(estabelecimento)
   }
 
   if (loading) {
@@ -181,13 +194,14 @@ export default function EstabelecimentosPage() {
           <h1 className="text-3xl font-bold tracking-tight">Estabelecimentos</h1>
           <p className="text-muted-foreground mt-1">Gerencie os estabelecimentos participantes</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button disabled={loading} className="shadow-sm">
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Estabelecimento
-        </Button>
-          </DialogTrigger>
+        {permissions.canCreate('estabelecimentos') && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button disabled={loading} className="shadow-sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Estabelecimento
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl">Novo Estabelecimento</DialogTitle>
@@ -305,8 +319,17 @@ export default function EstabelecimentosPage() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        )}
       </div>
+
+      {/* Banner de Sigilo */}
+      {sigiloAtivo && (
+        <SigiloBanner 
+          title="Médias e notas bloqueadas"
+          description="As médias e notas dos estabelecimentos estão protegidas pelo sigilo e serão liberadas após a premiação."
+        />
+      )}
 
       {/* Cards de Estatísticas */}
       {stats && (
@@ -328,8 +351,8 @@ export default function EstabelecimentosPage() {
           />
           <DashboardCard
             title="Média Geral"
-            value={sigiloAtivo ? '***' : formatRating(stats.mediaGeral)}
-            icon={Star}
+            value={sigiloAtivo ? '🔒 ***' : formatRating(stats.mediaGeral)}
+            icon={sigiloAtivo ? Lock : Star}
           />
         </div>
       )}
@@ -337,44 +360,50 @@ export default function EstabelecimentosPage() {
       {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle>Lista de Estabelecimentos</CardTitle>
+          <CardTitle>{isRestaurante ? 'Meu Estabelecimento' : 'Lista de Estabelecimentos'}</CardTitle>
           <CardDescription>
-            {filteredEstabelecimentos.length} estabelecimento(s) encontrado(s)
+            {isRestaurante 
+              ? 'Visualize e gerencie os dados do seu estabelecimento'
+              : `${filteredEstabelecimentos.length} estabelecimento(s) encontrado(s)`
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <Input
-                placeholder="Buscar estabelecimento..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+          {/* Filtros - ocultos para restaurantes */}
+          {!isRestaurante && (
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
+              <div className="flex-1">
+                <Input
+                  placeholder="Buscar estabelecimento..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Select value={cityFilter} onValueChange={setCityFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por cidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as cidades</SelectItem>
+                  {allCities.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="ativo">Ativo</SelectItem>
+                  <SelectItem value="inativo">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={cityFilter} onValueChange={setCityFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por cidade" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as cidades</SelectItem>
-                {allCities.map((c) => (
-                  <SelectItem key={c.id} value={c.id.toString()}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="ativo">Ativo</SelectItem>
-                <SelectItem value="inativo">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          )}
 
           {/* Tabela */}
           <div className="rounded-md border">
@@ -413,7 +442,7 @@ export default function EstabelecimentosPage() {
                       <TableCell>{formatNumber(estabelecimento.totalVotos)}</TableCell>
                       <TableCell>
                         {sigiloAtivo ? (
-                          <span className="text-muted-foreground">***</span>
+                          <SigiloValue />
                         ) : (
                           <div className="flex items-center gap-1">
                             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -444,22 +473,24 @@ export default function EstabelecimentosPage() {
                               <p>Ver detalhes</p>
                             </TooltipContent>
                           </Tooltip>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEdit(estabelecimento)}
-                                disabled={loading}
-                                className="h-8 w-8"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Editar estabelecimento</p>
-                            </TooltipContent>
-                          </Tooltip>
+                          {permissions.canEdit('estabelecimentos') && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEdit(estabelecimento)}
+                                  disabled={loading}
+                                  className="h-8 w-8"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Editar estabelecimento</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -481,6 +512,157 @@ export default function EstabelecimentosPage() {
           />
         </CardContent>
       </Card>
+
+      {/* Modal de Detalhes do Estabelecimento */}
+      <Dialog open={!!selectedEstabelecimento} onOpenChange={() => setSelectedEstabelecimento(null)}>
+        <DialogContent className="!max-w-2xl max-h-[90vh] overflow-y-auto">
+          {selectedEstabelecimento && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl flex items-center gap-2">
+                  <Building2 className="h-6 w-6" />
+                  {selectedEstabelecimento.name}
+                </DialogTitle>
+                <DialogDescription>
+                  Detalhes completos do estabelecimento
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-6 py-4">
+                {/* Foto da Fachada */}
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg border bg-muted">
+                  <img 
+                    src={selectedEstabelecimento.fotoFachada || '/estabelecimento.jpg'} 
+                    alt={selectedEstabelecimento.name}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+
+                {/* Informações Básicas */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Contato</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedEstabelecimento.endereco}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedEstabelecimento.telefone}</span>
+                      </div>
+                      {selectedEstabelecimento.email && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span>{selectedEstabelecimento.email}</span>
+                        </div>
+                      )}
+                      {selectedEstabelecimento.instagram && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Instagram className="h-4 w-4 text-muted-foreground" />
+                          <span>{selectedEstabelecimento.instagram}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedEstabelecimento.horarioFuncionamento}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Categoria</h4>
+                    <Badge variant="outline" className="text-base">
+                      {selectedEstabelecimento.categoria?.nome || 'Não definida'}
+                    </Badge>
+                    
+                    {selectedEstabelecimento.descricao && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {selectedEstabelecimento.descricao}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Status Financeiro (apenas para sócio local/admin) */}
+                {(role === 'socio_local' || role === 'admin') && (
+                  <div className="space-y-3 pt-4 border-t">
+                    <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Status Financeiro</h4>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      <div className="flex items-center gap-3 p-3 rounded-lg border">
+                        {selectedEstabelecimento.pagou ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <XCircle className="h-5 w-5 text-red-600" />
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">Pagamento</p>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedEstabelecimento.pagou ? 'Confirmado' : 'Pendente'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 p-3 rounded-lg border">
+                        <Ticket className={`h-5 w-5 ${selectedEstabelecimento.comprouConvite ? 'text-green-600' : 'text-muted-foreground'}`} />
+                        <div>
+                          <p className="text-sm font-medium">Convites</p>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedEstabelecimento.comprouConvite 
+                              ? `${selectedEstabelecimento.quantidadeConvites} convite(s)` 
+                              : 'Não comprou'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 p-3 rounded-lg border">
+                        <Star className={`h-5 w-5 ${selectedEstabelecimento.comprouDivulgacaoExtra ? 'text-yellow-500' : 'text-muted-foreground'}`} />
+                        <div>
+                          <p className="text-sm font-medium">Divulgação Extra</p>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedEstabelecimento.comprouDivulgacaoExtra ? 'Contratada' : 'Não contratada'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Agendamento de Foto */}
+                {(role === 'socio_local' || role === 'admin' || role === 'fotografo') && selectedEstabelecimento.horarioAgendadoFoto && (
+                  <div className="space-y-3 pt-4 border-t">
+                    <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Sessão de Fotos</h4>
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                      <Camera className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Horário Agendado</p>
+                        <p className="text-sm text-blue-600 dark:text-blue-500">
+                          {formatDateTime(selectedEstabelecimento.horarioAgendadoFoto)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedEstabelecimento(null)}>
+                  Fechar
+                </Button>
+                {permissions.canEdit('estabelecimentos') && (
+                  <Button onClick={() => {
+                    handleEdit(selectedEstabelecimento)
+                    setSelectedEstabelecimento(null)
+                  }}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                )}
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -4,7 +4,7 @@
  */
 
 export const mockUsers = [
-  // ========== ADMIN ==========
+  // ========== ADMIN (sempre vê tudo, sem sigilo) ==========
   {
     id: 1,
     email: 'admin@impera.com',
@@ -13,39 +13,33 @@ export const mockUsers = [
     role: 'admin',
     estabelecimentoId: null,
     premiacaoEncerrada: false,
-    sigiloAtivo: false,
-  },
-  {
-    id: 2,
-    email: 'admin.sigilo@impera.com',
-    password: 'admin123',
-    name: 'Admin com Sigilo',
-    role: 'admin',
-    estabelecimentoId: null,
-    premiacaoEncerrada: false,
-    sigiloAtivo: true, // Sigilo ativo para testes
+    sigiloAtivo: false, // Admin NUNCA tem sigilo - vê tudo sempre
   },
 
-  // ========== FRANQUEADO ==========
+  // ========== SÓCIO LOCAL ==========
   {
     id: 3,
-    email: 'franqueado@impera.com',
-    password: 'franqueado123',
-    name: 'Franqueado',
-    role: 'franqueado',
+    email: 'socio@impera.com',
+    password: 'socio123',
+    name: 'Sócio Local - Bauru',
+    role: 'socio_local',
     estabelecimentoId: null,
+    cidadeId: 1, // Bauru
+    edicaoId: 1,
     premiacaoEncerrada: false,
-    sigiloAtivo: false,
+    sigiloAtivo: true, // Sigilo ATIVO por padrão
   },
   {
     id: 4,
-    email: 'franqueado.sigilo@impera.com',
-    password: 'franqueado123',
-    name: 'Franqueado com Sigilo',
-    role: 'franqueado',
+    email: 'socio.semsigilo@impera.com',
+    password: 'socio123',
+    name: 'Sócio Local sem Sigilo',
+    role: 'socio_local',
     estabelecimentoId: null,
+    cidadeId: 1,
+    edicaoId: 1,
     premiacaoEncerrada: false,
-    sigiloAtivo: true,
+    sigiloAtivo: false, // Sigilo desativado para testes
   },
 
   // ========== ESTABELECIMENTO (Premiação NÃO Encerrada) ==========
@@ -57,7 +51,7 @@ export const mockUsers = [
     role: 'estabelecimento',
     estabelecimentoId: 1,
     premiacaoEncerrada: false, // Premiação NÃO encerrada
-    sigiloAtivo: false,
+    sigiloAtivo: true, // Sigilo ATIVO - comportamento padrão durante o circuito
   },
   {
     id: 6,
@@ -67,7 +61,7 @@ export const mockUsers = [
     role: 'estabelecimento',
     estabelecimentoId: 2,
     premiacaoEncerrada: false,
-    sigiloAtivo: false,
+    sigiloAtivo: true, // Sigilo ATIVO
   },
 
   // ========== ESTABELECIMENTO (Premiação ENCERRADA) ==========
@@ -90,6 +84,70 @@ export const mockUsers = [
     estabelecimentoId: 4,
     premiacaoEncerrada: true,
     sigiloAtivo: true, // Com sigilo ativo
+  },
+
+  // ========== FOTÓGRAFO ==========
+  {
+    id: 9,
+    email: 'fotografo@impera.com',
+    password: 'fotografo123',
+    name: 'Fotógrafo',
+    role: 'fotografo',
+    estabelecimentoId: null,
+    premiacaoEncerrada: false,
+    sigiloAtivo: false,
+  },
+
+  // ========== SÓCIO LOCAL (Marília) ==========
+  {
+    id: 10,
+    email: 'socio.marilia@impera.com',
+    password: 'socio123',
+    name: 'Sócio Local - Marília',
+    role: 'socio_local',
+    estabelecimentoId: null,
+    cidadeId: 2, // Marília
+    edicaoId: 3,
+    premiacaoEncerrada: false,
+    sigiloAtivo: false,
+  },
+
+  // ========== CLIENTE (Votante) ==========
+  {
+    id: 12,
+    email: 'cliente@impera.com',
+    password: 'cliente123',
+    name: 'Maria Silva',
+    role: 'cliente',
+    estabelecimentoId: null,
+    premiacaoEncerrada: false,
+    sigiloAtivo: false,
+    // Dados específicos do cliente
+    cpf: '123.456.789-00',
+    telefone: '(14) 99999-1234',
+    genero: 'feminino',
+    idade: 32,
+    faixaRenda: '3000-5000',
+    cidade: 'Bauru',
+    juradoTecnico: false,
+  },
+  {
+    id: 13,
+    email: 'cliente.jurado@impera.com',
+    password: 'cliente123',
+    name: 'João Santos',
+    role: 'cliente',
+    estabelecimentoId: null,
+    premiacaoEncerrada: false,
+    sigiloAtivo: false,
+    // Dados específicos do cliente
+    cpf: '987.654.321-00',
+    telefone: '(14) 99888-5678',
+    genero: 'masculino',
+    idade: 45,
+    faixaRenda: '5000-10000',
+    cidade: 'Bauru',
+    juradoTecnico: true, // É jurado técnico
   },
 ]
 

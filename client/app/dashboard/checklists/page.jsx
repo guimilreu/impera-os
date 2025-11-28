@@ -20,7 +20,7 @@ export default function ChecklistsPage() {
   const { role, estabelecimentoId } = useAuthStore()
 
   // Se for estabelecimento, mostrar apenas seu checklist
-  // Se for admin/franqueado, mostrar todos
+  // Se for admin/socio_local, mostrar todos
   const checklists = role === 'estabelecimento' 
     ? [{ id: estabelecimentoId || 1, nome: 'Meu Checklist', items: mockChecklistItems }]
     : [

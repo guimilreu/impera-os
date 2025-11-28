@@ -442,7 +442,7 @@ function VotarContent() {
 	const [keyboardHeight, setKeyboardHeight] = useState(0);
 
 	const plateId = searchParams.get("plateId") || "plate_001";
-	const editionId = searchParams.get("editionId") || "edition_2024";
+	const editionId = searchParams.get("editionId") || "edition_2025";
 
 	const videoRef = useRef(null);
 	const canvasRef = useRef(null);

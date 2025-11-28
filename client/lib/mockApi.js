@@ -83,7 +83,7 @@ export const mockApi = {
       name: "Salmão em Crosta de Ervas com Risoto de Aspargos",
       restaurant: "Bistrô Gourmet",
       category: "Prato Principal",
-      photo: "/prato.jpg",
+      photo: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop",
       editionId: editionId || "edition_2025",
     }
   },

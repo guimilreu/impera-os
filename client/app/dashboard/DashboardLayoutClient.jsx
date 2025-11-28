@@ -19,12 +19,37 @@ export function DashboardLayoutClient({ children }) {
     }
   }, [isAuthenticated, router])
 
+  // Redireciona auditoria para moderação
+  useEffect(() => {
+    if (pathname === '/dashboard/auditoria') {
+      router.replace('/dashboard/moderacao')
+    }
+  }, [pathname, router])
+
   // Verifica permissões para rotas protegidas
   useEffect(() => {
     if (!isAuthenticated) return
     
-    const route = pathname.replace('/dashboard', '').replace('/', '') || 'overview'
-    const module = route === '' ? 'overview' : route
+    // Extrai os segmentos da rota
+    const segments = pathname.replace('/dashboard', '').split('/').filter(Boolean)
+    
+    // Determina o módulo baseado na rota
+    let module = 'overview'
+    
+    if (segments.length === 0) {
+      module = 'overview'
+    } else if (segments[0] === 'gestao' && segments[1]) {
+      // Para rotas como /dashboard/gestao/recados, usa o segundo segmento
+      module = segments[1]
+    } else {
+      // Para outras rotas, usa o primeiro segmento
+      module = segments[0]
+    }
+    
+    // Mapeia aliases de módulos
+    if (module === 'avaliacao') module = 'votos'
+    if (module === 'auditoria') module = 'moderacao'
+    if (module === 'pratos') module = 'pratos'
 
     if (!hasPermission(module)) {
       router.push('/dashboard')

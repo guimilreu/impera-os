@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Mail, Lock, AlertCircle, LogIn } from "lucide-react"
 import { useAuthStore } from "@/lib/state/useAuthStore"
 import { findUserByCredentials } from "@/lib/mock/users"
+import { initializePratosForEstabelecimento } from "@/lib/mock/pratos"
 import { delay } from "@/lib/utils/delay"
 import { toast } from "sonner"
 
@@ -76,6 +77,24 @@ export default function LoginPage() {
         setError("Email ou senha incorretos")
         setLoading(false)
         return
+      }
+
+      // Se for estabelecimento, verifica se é o primeiro login e inicializa pratos mockados
+      if (user.role === 'estabelecimento' && user.estabelecimentoId) {
+        const storageKey = `pratos_inicializados_${user.estabelecimentoId}`
+        const pratosJaInicializados = localStorage.getItem(storageKey)
+        
+        if (!pratosJaInicializados) {
+          // Primeiro login - inicializa pratos mockados
+          const pratosCriados = initializePratosForEstabelecimento(user.estabelecimentoId)
+          localStorage.setItem(storageKey, 'true')
+          
+          if (pratosCriados && pratosCriados.length > 0) {
+            toast.success(`${pratosCriados.length} receitas iniciais criadas!`, {
+              description: 'Você pode editá-las na página de Receitas',
+            })
+          }
+        }
       }
 
       // Faz login
