@@ -9,9 +9,17 @@ export function AuditTag({ status, ...props }) {
       label: 'Validado',
       className: 'bg-green-500 hover:bg-green-600',
     },
+    pendente: {
+      label: 'Pendente',
+      className: 'bg-yellow-500 hover:bg-yellow-600',
+    },
     suspeito: {
       label: 'Suspeito',
-      className: 'bg-yellow-500 hover:bg-yellow-600',
+      className: 'bg-orange-500 hover:bg-orange-600',
+    },
+    rejeitado: {
+      label: 'Rejeitado',
+      className: 'bg-red-500 hover:bg-red-600',
     },
     invalido: {
       label: 'Inválido',

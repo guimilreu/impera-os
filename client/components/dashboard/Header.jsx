@@ -108,7 +108,7 @@ export function Header({ onMenuClick }) {
 									onClick={handleLogout}
 									className="cursor-pointer text-destructive focus:text-destructive"
 								>
-									<LogOut className="mr-2 h-4 w-4" />
+									<LogOut className="mr-2 h-4 w-4 text-destructive" />
 									<span>Sair</span>
 								</DropdownMenuItem>
 							</DropdownMenuContent>

@@ -58,8 +58,14 @@ export default function AvaliacoesHistoryPage() {
 
   return (
     <div
-      className="relative min-h-screen bg-cover bg-center bg-no-repeat p-4 md:p-6"
-      style={{ backgroundImage: "url('/background.png')" }}
+      className="relative min-h-screen p-4 md:p-6"
+      style={{
+        backgroundImage: "url('/background.jpg')",
+        backgroundSize: "100vw calc(100vw * 9 / 16)",
+        backgroundPosition: "center top",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+      }}
     >
       <div className="container mx-auto max-w-4xl space-y-6">
         {/* Header */}

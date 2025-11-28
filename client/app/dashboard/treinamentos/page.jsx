@@ -397,11 +397,8 @@ export default function TreinamentosPage() {
 									<>
 										{/* Player de vídeo */}
 										<div className="relative aspect-video bg-muted rounded-lg overflow-hidden border">
-											{/* Thumbnail de fundo */}
-											<div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=1280&h=720&fit=crop')] bg-cover bg-center opacity-40" />
-											
 											{/* Overlay escuro */}
-											<div className="absolute inset-0 bg-gradient-to-br from-black/60 to-black/40" />
+											<div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-gray-800" />
 											
 											{/* Botão de play central */}
 											<div className="absolute inset-0 flex items-center justify-center">

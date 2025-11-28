@@ -24,6 +24,7 @@ import {
 	ShoppingCart,
 	ChevronDown,
 	ChevronRight,
+	Lock,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/state/useAuthStore";
 
@@ -132,10 +133,38 @@ const menuItems = [
 
 export function Sidebar({ className, mobileOpen, onClose }) {
 	const pathname = usePathname();
-	const { hasPermission, role } = useAuthStore();
+	const { hasPermission, role, premiacaoEncerrada } = useAuthStore();
 	const [expandedSections, setExpandedSections] = useState({ "Gestão": true });
 
-	// Filtra itens baseado em permissões
+	// Verifica se um item está bloqueado para estabelecimento antes da premiação encerrar
+	const isItemBlocked = (permission) => {
+		if (role !== 'estabelecimento') return false;
+		
+		// Relatórios só estão disponíveis após a premiação encerrar
+		if (permission === 'relatorios') {
+			return !premiacaoEncerrada;
+		}
+		
+		// Avaliação está bloqueada até a premiação encerrar (mesmo tendo view: true)
+		if (permission === 'avaliacao') {
+			return !premiacaoEncerrada;
+		}
+		
+		return false;
+	};
+
+	// Retorna a mensagem de bloqueio baseada no tipo de permissão
+	const getBlockedMessage = (permission) => {
+		if (permission === 'relatorios') {
+			return 'Relatórios disponíveis somente após a premiação encerrar';
+		}
+		if (permission === 'avaliacao') {
+			return 'Avaliações bloqueadas até a premiação encerrar';
+		}
+		return 'Item bloqueado';
+	};
+
+	// Filtra itens baseado em permissões - mostra todos que têm view: true, mesmo bloqueados
 	const filteredItems = menuItems.filter((item) => {
 		// Se não tem role ainda, não mostra nada
 		if (!role) return false;
@@ -177,41 +206,67 @@ export function Sidebar({ className, mobileOpen, onClose }) {
 	const renderMenuItem = (item, isChild = false) => {
 		const Icon = item.icon;
 		const isActive = pathname === item.href;
+		const isBlocked = isItemBlocked(item.permission);
+		const blockedMessage = isBlocked ? getBlockedMessage(item.permission) : null;
+
+		const buttonContent = (
+			<Button
+				variant={"ghost"}
+				className={cn(
+					"w-full justify-start transition-all duration-200",
+					isBlocked 
+						? "cursor-not-allowed opacity-60" 
+						: "cursor-pointer",
+					isActive && !isBlocked
+						? "bg-[#e56d21]/5 hover:bg-[#e56d21]/10 text-secondary-foreground border border-[#e56d21]/30 mesh-sidebar-active"
+						: !isBlocked && "hover:bg-[#e56d21]/5 hover:text-foreground mesh-sidebar-hover",
+					"group relative",
+					isChild && "pl-8 text-sm"
+				)}
+				disabled={isBlocked}
+				onClick={isBlocked ? undefined : onClose}
+				title={blockedMessage || undefined}
+			>
+				<Icon
+					className={cn(
+						"mr-2 h-4 w-4 transition-colors",
+						isActive && !isBlocked
+							? "text-primary"
+							: isBlocked
+							? "text-muted-foreground/50"
+							: "text-muted-foreground group-hover:text-foreground",
+						isChild && "h-3.5 w-3.5"
+					)}
+				/>
+				<span
+					className={cn(
+						"font-medium transition-colors flex-1 text-left",
+						isActive && !isBlocked
+							? "text-secondary-foreground"
+							: isBlocked
+							? "text-muted-foreground/50"
+							: "text-muted-foreground group-hover:text-foreground"
+					)}
+				>
+					{item.title}
+				</span>
+				{isBlocked && (
+					<Lock className="h-4 w-4 text-[#e56d21] ml-auto flex-shrink-0" />
+				)}
+			</Button>
+		);
+
+		if (isBlocked) {
+			return (
+				<div key={item.href} className="relative">
+					{buttonContent}
+				</div>
+			);
+		}
 
 		return (
 			<Link key={item.href} href={item.href}>
-				<Button
-					variant={"ghost"}
-					className={cn(
-						"w-full justify-start transition-all duration-200 cursor-pointer",
-						isActive
-							? "bg-[#e56d21]/5 hover:bg-[#e56d21]/10 text-secondary-foreground border border-[#e56d21]/30 mesh-sidebar-active"
-							: "hover:bg-[#e56d21]/5 hover:text-foreground mesh-sidebar-hover",
-						"group relative",
-						isChild && "pl-8 text-sm"
-					)}
-					onClick={onClose}
-				>
-					<Icon
-						className={cn(
-							"mr-2 h-4 w-4 transition-colors",
-							isActive
-								? "text-primary"
-								: "text-muted-foreground group-hover:text-foreground",
-							isChild && "h-3.5 w-3.5"
-						)}
-					/>
-					<span
-						className={cn(
-							"font-medium transition-colors",
-							isActive
-								? "text-secondary-foreground"
-								: "text-muted-foreground group-hover:text-foreground"
-						)}
-					>
-						{item.title}
-					</span>
-				</Button>
+				{buttonContent}
 			</Link>
 		);
 	};
@@ -221,7 +276,7 @@ export function Sidebar({ className, mobileOpen, onClose }) {
 		const isExpanded = expandedSections[item.title];
 		const hasActiveChild = item.children?.some(child => pathname === child.href);
 		
-		// Filtra filhos baseado em permissões
+		// Filtra filhos baseado em permissões - mostra todos que têm view: true, mesmo bloqueados
 		const visibleChildren = item.children?.filter(child => hasPermission(child.permission)) || [];
 		
 		if (visibleChildren.length === 0) return null;

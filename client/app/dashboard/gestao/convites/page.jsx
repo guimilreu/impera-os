@@ -277,29 +277,31 @@ export default function ConvitesPage() {
         )}
       </div>
 
-      {/* Cards de Estatísticas */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <DashboardCard
-          title="Convites Vendidos"
-          value={formatNumber(totalConvitesVendidos)}
-          icon={Ticket}
-        />
-        <DashboardCard
-          title="Total Arrecadado"
-          value={formatCurrency(totalArrecadado)}
-          icon={DollarSign}
-        />
-        <DashboardCard
-          title="Restaurantes"
-          value={convites.length}
-          icon={Building2}
-        />
-        <DashboardCard
-          title="QR Codes Usados"
-          value={`${qrCodesUsados}/${totalConvitesVendidos}`}
-          icon={QrCode}
-        />
-      </div>
+      {/* Cards de Estatísticas - Ocultos para estabelecimentos */}
+      {!isRestaurante && (
+        <div className="grid gap-4 md:grid-cols-4">
+          <DashboardCard
+            title="Convites Vendidos"
+            value={formatNumber(totalConvitesVendidos)}
+            icon={Ticket}
+          />
+          <DashboardCard
+            title="Total Arrecadado"
+            value={formatCurrency(totalArrecadado)}
+            icon={DollarSign}
+          />
+          <DashboardCard
+            title="Restaurantes"
+            value={convites.length}
+            icon={Building2}
+          />
+          <DashboardCard
+            title="QR Codes Usados"
+            value={`${qrCodesUsados}/${totalConvitesVendidos}`}
+            icon={QrCode}
+          />
+        </div>
+      )}
 
       {/* Lista de Convites */}
       <Card>

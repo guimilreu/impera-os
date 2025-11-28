@@ -11,40 +11,55 @@ export function Breadcrumb() {
   const { city, edition } = useTenantStore()
 
   const getBreadcrumb = () => {
-    const path = pathname.replace('/dashboard', '').replace('/', '') || 'overview'
+    // Remove /dashboard do início e divide o path em partes
+    const pathParts = pathname.replace('/dashboard', '').split('/').filter(Boolean)
     
     const breadcrumb = [
       { label: 'Dashboard', href: '/dashboard' }
     ]
     
-    if (path !== 'overview' && path !== '') {
-      const moduleNames = {
-        cidades: 'Cidades',
-        edicoes: 'Edições',
-        estabelecimentos: 'Estabelecimentos',
-        pratos: 'Receitas',
-        votos: 'Votos',
-        avaliacao: 'Avaliação',
-        auditoria: 'Moderação',
-        moderacao: 'Moderação',
-        clientes: 'Clientes',
-        relatorios: 'Relatórios',
-        checklists: 'Checklists',
-        treinamentos: 'Treinamentos',
-        configuracoes: 'Configurações',
-      }
+    if (pathParts.length === 0 || (pathParts.length === 1 && pathParts[0] === '')) {
+      return breadcrumb
+    }
+    
+    const moduleNames = {
+      cidades: 'Cidades',
+      edicoes: 'Edições',
+      estabelecimentos: 'Estabelecimentos',
+      pratos: 'Receitas',
+      votos: 'Votos',
+      avaliacao: 'Avaliação',
+      auditoria: 'Moderação',
+      moderacao: 'Moderação',
+      clientes: 'Clientes',
+      relatorios: 'Relatórios',
+      checklists: 'Checklists',
+      treinamentos: 'Treinamentos',
+      configuracoes: 'Configurações',
+      gestao: 'Gestão',
+      convites: 'Convites',
+      recados: 'Recados',
+      vendas: 'Vendas',
+    }
+    
+    // Constrói o breadcrumb baseado nas partes do path
+    let currentPath = '/dashboard'
+    
+    pathParts.forEach((part, index) => {
+      currentPath += `/${part}`
+      const isLast = index === pathParts.length - 1
       
       breadcrumb.push({
-        label: moduleNames[path] || path,
-        href: `/dashboard/${path}`
+        label: moduleNames[part] || part,
+        href: isLast ? null : currentPath
       })
-      
-      // Se tem tenant selecionado, adiciona ao breadcrumb
-      if (city && path === 'cidades') {
-        breadcrumb.push({ label: city.name, href: null })
-      } else if (edition && path === 'edicoes') {
-        breadcrumb.push({ label: edition.name, href: null })
-      }
+    })
+    
+    // Se tem tenant selecionado, adiciona ao breadcrumb
+    if (city && pathParts[0] === 'cidades') {
+      breadcrumb.push({ label: city.name, href: null })
+    } else if (edition && pathParts[0] === 'edicoes') {
+      breadcrumb.push({ label: edition.name, href: null })
     }
     
     return breadcrumb

@@ -24,7 +24,7 @@ import { delay, DEFAULT_DELAY } from "@/lib/utils/delay"
 import { formatNumber, formatDateTime } from "@/lib/utils/format"
 import { mockHash, randomFloat, randomDate } from "@/lib/utils/faker"
 import { fotosReceitas, filterFotosByStatus, getFotosStats } from "@/lib/mock/fotos"
-import { getVotosStatsModeracao, getVotosSuspeitos, getVotosPendentes, aprovarVoto, rejeitarVoto, marcarSuspeito, getEstatisticasModeracao } from "@/lib/mock/votos"
+import { getVotosStatsModeracao, getVotosSuspeitos, getVotosPendentes, aprovarVoto, rejeitarVoto, getEstatisticasModeracao } from "@/lib/mock/votos"
 import { useTenantStore } from "@/lib/state/useTenantStore"
 import { usePermissions } from "@/lib/permissions"
 import { useAuthStore } from "@/lib/state/useAuthStore"
@@ -70,7 +70,7 @@ function generateFotos(count = 12) {
 // Gera votos suspeitos mockados
 function generateVotosSuspeitos(count = 15) {
   const items = []
-  const statuses = ['pendente', 'validado', 'suspeito']
+  const statuses = ['pendente', 'validado', 'rejeitado']
   
   for (let i = 1; i <= count; i++) {
     const gps = { lat: -23.5505 + randomFloat(-0.1, 0.1), lng: -46.6333 + randomFloat(-0.1, 0.1) }
@@ -86,8 +86,69 @@ function generateVotosSuspeitos(count = 15) {
       horario: randomDate(30).toISOString(),
       deviceInfo: ['iPhone 13', 'Samsung Galaxy S21', 'Xiaomi Mi 11', 'Google Pixel 6'][Math.floor(Math.random() * 4)],
       status,
-      motivoSuspeito: status === 'suspeito' ? ['GPS inconsistente', 'Foto duplicada', 'Horário suspeito', 'IA detectou anomalia'][Math.floor(Math.random() * 4)] : null,
+      motivoSuspeito: status === 'rejeitado' ? 'Rejeitado pela moderação' : ['GPS inconsistente', 'Foto duplicada', 'Horário suspeito', 'IA detectou anomalia'][Math.floor(Math.random() * 4)],
       iaScore: randomFloat(0.3, 0.95), // Score de confiança da IA
+    })
+  }
+  
+  return items
+}
+
+// Gera votos com problemas de GPS/Metadados para a aba específica
+function generateVotosGPS(count = 8) {
+  const items = []
+  const problemas = [
+    { tipo: 'GPS fora do raio permitido', distancia: randomFloat(2.5, 15) },
+    { tipo: 'GPS não corresponde ao estabelecimento', distancia: randomFloat(5, 25) },
+    { tipo: 'Coordenadas inválidas ou falsificadas', distancia: randomFloat(100, 500) },
+    { tipo: 'GPS desativado no momento do voto', distancia: null },
+    { tipo: 'Localização em área não permitida', distancia: randomFloat(1.5, 8) },
+    { tipo: 'Múltiplos votos da mesma coordenada', distancia: randomFloat(0, 0.1) },
+  ]
+  
+  const estabelecimentos = [
+    { nome: 'Restaurante Sabor', endereco: 'Av. Paulista, 1000', cidade: 'São Paulo' },
+    { nome: 'Cantina Tradição', endereco: 'R. Augusta, 500', cidade: 'São Paulo' },
+    { nome: 'Bistrô Gourmet', endereco: 'R. Oscar Freire, 200', cidade: 'São Paulo' },
+    { nome: 'Casa do Chef', endereco: 'Av. Faria Lima, 1500', cidade: 'São Paulo' },
+  ]
+  
+  const devices = [
+    { modelo: 'iPhone 15 Pro', os: 'iOS 17.2', browser: 'Safari Mobile' },
+    { modelo: 'Samsung Galaxy S24', os: 'Android 14', browser: 'Chrome Mobile' },
+    { modelo: 'Xiaomi 14', os: 'Android 14', browser: 'Mi Browser' },
+    { modelo: 'Google Pixel 8', os: 'Android 14', browser: 'Chrome Mobile' },
+    { modelo: 'iPhone 13', os: 'iOS 16.5', browser: 'Safari Mobile' },
+  ]
+  
+  for (let i = 1; i <= count; i++) {
+    const problema = problemas[i % problemas.length]
+    const estabelecimento = estabelecimentos[Math.floor(Math.random() * estabelecimentos.length)]
+    const device = devices[Math.floor(Math.random() * devices.length)]
+    const gpsOrigem = { lat: -23.5505 + randomFloat(-0.05, 0.05), lng: -46.6333 + randomFloat(-0.05, 0.05) }
+    const gpsVoto = problema.distancia !== null 
+      ? { lat: gpsOrigem.lat + randomFloat(-0.1, 0.1), lng: gpsOrigem.lng + randomFloat(-0.1, 0.1) }
+      : null
+    
+    items.push({
+      id: 100 + i,
+      votoId: `GPS_${String(i).padStart(3, '0')}`,
+      foto: FOOD_IMAGES_MOCK[i % FOOD_IMAGES_MOCK.length],
+      hash: mockHash(32),
+      gpsEstabelecimento: gpsOrigem,
+      gpsVoto: gpsVoto,
+      distancia: problema.distancia,
+      horario: randomDate(15).toISOString(),
+      estabelecimento: estabelecimento,
+      device: device,
+      ip: `189.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+      userAgent: `Mozilla/5.0 (${device.os}) AppleWebKit/537.36`,
+      status: 'pendente',
+      problema: problema.tipo,
+      precisao: gpsVoto ? randomFloat(5, 500) : null, // Precisão em metros
+      altitude: gpsVoto ? randomFloat(700, 900) : null,
+      velocidade: gpsVoto ? randomFloat(0, 5) : null,
+      timestamp: randomDate(15).toISOString(),
     })
   }
   
@@ -100,11 +161,13 @@ export default function ModeracaoPage() {
   const [filteredFotos, setFilteredFotos] = useState([])
   const [votosSuspeitos, setVotosSuspeitos] = useState([])
   const [filteredVotos, setFilteredVotos] = useState([])
+  const [votosGPS, setVotosGPS] = useState([])
   const [statusFilterFotos, setStatusFilterFotos] = useState("todas")
   const [statusFilterVotos, setStatusFilterVotos] = useState("all")
   const [searchTermVotos, setSearchTermVotos] = useState("")
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const [selectedVoto, setSelectedVoto] = useState(null)
+  const [selectedVotoGPS, setSelectedVotoGPS] = useState(null)
   const [currentPageVotos, setCurrentPageVotos] = useState(1)
   const [itemsPerPage] = useState(10)
   const [stats, setStats] = useState(null)
@@ -128,9 +191,11 @@ export default function ModeracaoPage() {
       await delay(DEFAULT_DELAY)
       const fotosData = fotosReceitas // Usa dados reais de fotos de receitas
       const votosData = generateVotosSuspeitos(15)
+      const votosGPSData = generateVotosGPS(8)
       
       setFotos(fotosData)
       setVotosSuspeitos(votosData)
+      setVotosGPS(votosGPSData)
       
       // Calcula estatísticas usando o sistema novo
       const fotosStats = getFotosStats()
@@ -149,7 +214,9 @@ export default function ModeracaoPage() {
         totalVotos: votosData.length,
         votosPendentes: votosData.filter(v => v.status === 'pendente').length,
         votosValidados: votosData.filter(v => v.status === 'validado').length,
-        votosSuspeitos: votosData.filter(v => v.status === 'suspeito').length,
+        votosRejeitados: votosData.filter(v => v.status === 'rejeitado').length,
+        // GPS
+        totalProblemasGPS: votosGPSData.length,
       })
     } catch (error) {
       console.error('Erro ao carregar dados:', error)
@@ -252,18 +319,18 @@ export default function ModeracaoPage() {
     }
   }
 
-  function handleSuspectVoto(voto) {
-    // Marca o voto como suspeito/rejeitado
-    const sucesso = marcarSuspeito(voto.id, 'Rejeitado pela moderação')
+  function handleRejectVoto(voto) {
+    // Rejeita o voto - ele NÃO será contabilizado na avaliação
+    const sucesso = rejeitarVoto(voto.id, 'Rejeitado pela moderação')
     
     if (sucesso) {
       toast.error(`Voto ${voto.votoId} rejeitado`, {
         description: 'O voto não será contabilizado na avaliação.',
       })
       
-      // Atualiza o status na lista
+      // Atualiza o status na lista para "rejeitado"
       setVotosSuspeitos(items =>
-        items.map(i => i.id === voto.id ? { ...i, status: 'suspeito', motivoSuspeito: 'Rejeitado pela moderação' } : i)
+        items.map(i => i.id === voto.id ? { ...i, status: 'rejeitado', motivoSuspeito: 'Rejeitado pela moderação' } : i)
       )
     } else {
       toast.error('Erro ao rejeitar voto')
@@ -291,25 +358,21 @@ export default function ModeracaoPage() {
             title="Votos Suspeitos"
             value={formatNumber(stats.totalSuspeitos)}
             icon={AlertTriangle}
-            className="border-red-200 dark:border-red-800"
           />
           <DashboardCard
             title="Votos Pendentes"
             value={formatNumber(stats.totalPendentes)}
             icon={Clock}
-            className="border-yellow-200 dark:border-yellow-800"
           />
           <DashboardCard
             title="Fotos para Revisar"
             value={formatNumber(stats.fotosPendentes)}
             icon={Image}
-            className="border-blue-200 dark:border-blue-800"
           />
           <DashboardCard
             title="Votos Validados"
             value={formatNumber(stats.votosValidados)}
             icon={CheckCircle2}
-            className="border-green-200 dark:border-green-800"
           />
         </div>
       )}
@@ -398,7 +461,7 @@ export default function ModeracaoPage() {
                     <SelectItem value="all">Todos os status</SelectItem>
                     <SelectItem value="pendente">Pendente</SelectItem>
                     <SelectItem value="validado">Validado</SelectItem>
-                    <SelectItem value="suspeito">Suspeito</SelectItem>
+                    <SelectItem value="rejeitado">Rejeitado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -460,7 +523,7 @@ export default function ModeracaoPage() {
                                 onClick={() => setSelectedVoto(item)}
                                 disabled={loading}
                               >
-                                <XCircle className="h-4 w-4" />
+                                <EyeIcon className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -475,8 +538,8 @@ export default function ModeracaoPage() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8 text-red-600"
-                                onClick={() => handleSuspectVoto(item)}
-                                disabled={loading || item.status === 'suspeito'}
+                                onClick={() => handleRejectVoto(item)}
+                                disabled={loading || item.status === 'rejeitado'}
                               >
                                 <XCircle className="h-4 w-4" />
                               </Button>
@@ -504,39 +567,128 @@ export default function ModeracaoPage() {
 
         {/* Tab: GPS & Metadados */}
         <TabsContent value="gps" className="space-y-4">
+          {/* Cards de estatísticas de GPS */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <DashboardCard
+              title="GPS Fora do Raio"
+              value={formatNumber(votosGPS.filter(v => v.problema.includes('raio') || v.problema.includes('não corresponde')).length)}
+              icon={MapPin}
+            />
+            <DashboardCard
+              title="GPS Desativado"
+              value={formatNumber(votosGPS.filter(v => v.gpsVoto === null).length)}
+              icon={XCircle}
+            />
+            <DashboardCard
+              title="Coordenadas Suspeitas"
+              value={formatNumber(votosGPS.filter(v => v.problema.includes('falsificadas') || v.problema.includes('Múltiplos')).length)}
+              icon={AlertTriangle}
+            />
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle className="tracking-tight flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
-                GPS & Metadados
+                Votos com Problemas de GPS
               </CardTitle>
               <CardDescription>
-                Análise de localização e informações técnicas dos votos
+                {votosGPS.length} voto(s) com inconsistências de localização
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {votosSuspeitos.filter(v => v.status === 'suspeito' && v.motivoSuspeito?.includes('GPS')).slice(0, 5).map((voto) => (
-                  <div key={voto.id} className="flex items-center justify-between p-4 border rounded-md">
-                    <div className="flex-1">
-                      <p className="font-medium">{voto.votoId}</p>
-                      <p className="text-sm text-muted-foreground">
-                        GPS: {voto.gps.lat.toFixed(6)}, {voto.gps.lng.toFixed(6)} • Distância: {voto.distancia.toFixed(2)} km
-                      </p>
-                      <p className="text-sm text-red-600 mt-1">{voto.motivoSuspeito}</p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setSelectedVoto(voto)}>
-                      Ver detalhes
-                    </Button>
-                  </div>
-                ))}
-                {votosSuspeitos.filter(v => v.status === 'suspeito' && v.motivoSuspeito?.includes('GPS')).length === 0 && (
-                  <EmptyState
-                    icon={MapPin}
-                    title="Nenhum problema de GPS encontrado"
-                    description="Todos os votos têm GPS válido."
-                  />
-                )}
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>Estabelecimento</TableHead>
+                      <TableHead>Problema</TableHead>
+                      <TableHead>Distância</TableHead>
+                      <TableHead>Precisão</TableHead>
+                      <TableHead>Device</TableHead>
+                      <TableHead>IP</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {votosGPS.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="p-0">
+                          <EmptyState
+                            icon={MapPin}
+                            title="Nenhum problema de GPS encontrado"
+                            description="Todos os votos têm GPS válido."
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      votosGPS.map((voto) => (
+                        <TableRow key={voto.id} className="transition-colors hover:bg-muted/50">
+                          <TableCell className="font-mono text-xs">{voto.votoId}</TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-sm">{voto.estabelecimento.nome}</p>
+                              <p className="text-xs text-muted-foreground">{voto.estabelecimento.endereco}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="destructive" className="text-xs">
+                              {voto.problema}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {voto.distancia !== null ? `${voto.distancia.toFixed(2)} km` : '—'}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {voto.precisao !== null ? `±${voto.precisao.toFixed(0)}m` : '—'}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="text-xs font-medium">{voto.device.modelo}</p>
+                              <p className="text-xs text-muted-foreground">{voto.device.os}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">{voto.ip}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setSelectedVotoGPS(voto)}
+                              >
+                                <EyeIcon className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-green-600"
+                                onClick={() => {
+                                  setVotosGPS(items => items.filter(i => i.id !== voto.id))
+                                  toast.success(`Voto ${voto.votoId} aprovado!`)
+                                }}
+                              >
+                                <CheckCircle2 className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-red-600"
+                                onClick={() => {
+                                  setVotosGPS(items => items.filter(i => i.id !== voto.id))
+                                  toast.error(`Voto ${voto.votoId} rejeitado!`)
+                                }}
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
@@ -730,13 +882,13 @@ export default function ModeracaoPage() {
                   <Button
                     variant="outline"
                     onClick={() => {
-                      handleSuspectVoto(selectedVoto)
+                      handleRejectVoto(selectedVoto)
                       setSelectedVoto(null)
                     }}
                     disabled={loading}
                   >
                     <XCircle className="mr-2 h-4 w-4" />
-                    Marcar como Suspeito
+                    Rejeitar
                   </Button>
                   <Button
                     onClick={() => {
@@ -750,6 +902,147 @@ export default function ModeracaoPage() {
                   </Button>
                 </div>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de Detalhes do Voto GPS */}
+      <Dialog open={!!selectedVotoGPS} onOpenChange={() => setSelectedVotoGPS(null)}>
+        <DialogContent className="!max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Detalhes GPS - {selectedVotoGPS?.votoId}
+            </DialogTitle>
+            <DialogDescription>
+              Análise completa de localização e metadados do dispositivo
+            </DialogDescription>
+          </DialogHeader>
+          {selectedVotoGPS && (
+            <div className="space-y-6">
+              {/* Problema detectado */}
+              <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                  <p className="font-semibold text-red-600">{selectedVotoGPS.problema}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {/* Coluna esquerda - Foto e Estabelecimento */}
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium mb-2">Foto Enviada</p>
+                    <img
+                      src={selectedVotoGPS.foto}
+                      alt="Foto do voto"
+                      className="w-full h-40 object-cover rounded-md"
+                    />
+                  </div>
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="text-sm font-medium mb-1">Estabelecimento</p>
+                    <p className="text-sm">{selectedVotoGPS.estabelecimento.nome}</p>
+                    <p className="text-xs text-muted-foreground">{selectedVotoGPS.estabelecimento.endereco}</p>
+                    <p className="text-xs text-muted-foreground">{selectedVotoGPS.estabelecimento.cidade}</p>
+                  </div>
+                </div>
+
+                {/* Coluna direita - Dados técnicos */}
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-xs font-medium text-muted-foreground">GPS do Estabelecimento</p>
+                      <p className="text-sm font-mono">
+                        {selectedVotoGPS.gpsEstabelecimento.lat.toFixed(6)}, {selectedVotoGPS.gpsEstabelecimento.lng.toFixed(6)}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-xs font-medium text-muted-foreground">GPS do Voto</p>
+                      <p className="text-sm font-mono">
+                        {selectedVotoGPS.gpsVoto 
+                          ? `${selectedVotoGPS.gpsVoto.lat.toFixed(6)}, ${selectedVotoGPS.gpsVoto.lng.toFixed(6)}`
+                          : 'Não disponível'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-xs font-medium text-muted-foreground">Distância</p>
+                      <p className="text-sm font-semibold text-red-600">
+                        {selectedVotoGPS.distancia !== null ? `${selectedVotoGPS.distancia.toFixed(2)} km` : '—'}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-xs font-medium text-muted-foreground">Precisão</p>
+                      <p className="text-sm">
+                        {selectedVotoGPS.precisao !== null ? `±${selectedVotoGPS.precisao.toFixed(0)}m` : '—'}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-xs font-medium text-muted-foreground">Altitude</p>
+                      <p className="text-sm">
+                        {selectedVotoGPS.altitude !== null ? `${selectedVotoGPS.altitude.toFixed(0)}m` : '—'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="text-xs font-medium text-muted-foreground mb-2">Dispositivo</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Modelo:</span> {selectedVotoGPS.device.modelo}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">OS:</span> {selectedVotoGPS.device.os}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Browser:</span> {selectedVotoGPS.device.browser}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">IP:</span> <span className="font-mono">{selectedVotoGPS.ip}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-xs font-medium text-muted-foreground">Hash da Foto</p>
+                      <p className="text-xs font-mono truncate">{selectedVotoGPS.hash}</p>
+                    </div>
+                    <div className="p-3 bg-muted rounded-md">
+                      <p className="text-xs font-medium text-muted-foreground">Horário</p>
+                      <p className="text-sm">{formatDateTime(selectedVotoGPS.horario)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ações */}
+              <div className="flex gap-2 justify-end pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setVotosGPS(items => items.filter(i => i.id !== selectedVotoGPS.id))
+                    toast.error(`Voto ${selectedVotoGPS.votoId} rejeitado!`)
+                    setSelectedVotoGPS(null)
+                  }}
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Rejeitar Voto
+                </Button>
+                <Button
+                  onClick={() => {
+                    setVotosGPS(items => items.filter(i => i.id !== selectedVotoGPS.id))
+                    toast.success(`Voto ${selectedVotoGPS.votoId} aprovado!`)
+                    setSelectedVotoGPS(null)
+                  }}
+                >
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Aprovar Voto
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
